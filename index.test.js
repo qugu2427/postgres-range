@@ -96,6 +96,35 @@ describe('roundtrip', function () {
 describe('Range', function () {
   t(parse('[1, 10)', x => parseInt(x)).containsPoint(5), true, '[1, 10).containsPoint(5) is true')
   t(parse('[1, 10)', x => parseInt(x)).containsPoint(-5), false, '[1, 10).containsPoint(-5) is false')
+
   t(parse('[1, 10)', x => parseInt(x)).containsRange(parse('[1, 3]', x => parseInt(x))), true, '[1, 10).containsRange(\'[1, 3]\') is true')
   t(parse('[1, 10)', x => parseInt(x)).containsRange(parse('[-1, 3]', x => parseInt(x))), false, '[1, 10).containsRange(\'[-1, 3]\') is false')
+
+  t(parse('empty', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), false, 'empty.strictlyLeftOf(\'[9, 11)\') is false')
+  t(parse('[5, 6)', x => parseInt(x)).strictlyLeftOf(parse('empty', x => parseInt(x))), false, '[5, 6).strictlyLeftOf(\'empty\') is false')
+  t(parse('[5, 6)', x => parseInt(x)).strictlyLeftOf(parse('(, 11)', x => parseInt(x))), false, '[5,6).strictlyLeftOf(\'(, 11)\') is false')
+  t(parse('[5,)', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), false, '[5,).strictlyLeftOf(\'[9, 11)\') is false')
+  t(parse('[5, 9)', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), true, '[5, 9).strictlyLeftOf(\'[9, 11)\') is true')
+  t(parse('[5, 9]', x => parseInt(x)).strictlyLeftOf(parse('(9, 11)', x => parseInt(x))), true, '[5, 9].strictlyLeftOf(\'[(9, 11)\') is true')
+  t(parse('[5, 9]', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), false, '[5, 9].strictlyLeftOf(\'[9, 11)\') is false')
+  t(parse('[5, 10)', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), false, '[5, 10).strictlyLeftOf(\'[9, 11)\') is false')
+
+  t(parse('empty', x => parseInt(x)).strictlyRightOf(parse('[5, 10)', x => parseInt(x))), false, 'empty.strictlyRightOf(\'[5, 10)\') is false')
+  t(parse('[5, 10)', x => parseInt(x)).strictlyRightOf(parse('empty', x => parseInt(x))), false, '[5, 10).strictlyRightOf(\'empty\') is false')
+  t(parse('[20, 30)', x => parseInt(x)).strictlyRightOf(parse('(5,)', x => parseInt(x))), false, '[20, 30).strictlyLeftOf(\'(5,)\') is false')
+  t(parse('(,30)', x => parseInt(x)).strictlyRightOf(parse('[5, 10)', x => parseInt(x))), false, '(, 30).strictlyLeftOf(\'[5, 10)\') is false')
+  t(parse('[30, 40)', x => parseInt(x)).strictlyRightOf(parse('[20, 30)', x => parseInt(x))), true, '[30, 40).strictlyRightOf(\'[20, 30)\') is true')
+  t(parse('(30, 40)', x => parseInt(x)).strictlyRightOf(parse('[20, 30]', x => parseInt(x))), true, '(30, 40).strictlyRightOf(\'[20, 30]\') is true')
+  t(parse('[30, 40)', x => parseInt(x)).strictlyRightOf(parse('[20, 30]', x => parseInt(x))), false, '[30, 40).strictlyRightOf(\'[20, 30]\') is false')
+  t(parse('[50, 60)', x => parseInt(x)).strictlyRightOf(parse('[20, 30]', x => parseInt(x))), true, '[50, 60).strictlyRightOf(\'[20, 30]\') is false')
+
+  t(parse('[5, 10)', x => parseInt(x)).overlaps(parse('[10, 11]', x => parseInt(x))), false, '[5, 10).overlaps(\'[10, 11]\') is false')
+  t(parse('[5, 10]', x => parseInt(x)).overlaps(parse('[10, 11]', x => parseInt(x))), true, '[5, 10].overlaps(\'[10, 11]\') is true')
+  t(parse('[5, 10)', x => parseInt(x)).overlaps(parse('[8, 9]', x => parseInt(x))), true, '[5, 10).overlaps(\'[8, 9]\') is true')
+  t(parse('[8, 9)', x => parseInt(x)).overlaps(parse('[5, 10]', x => parseInt(x))), true, '[8, 9).overlaps(\'[5, 10]\') is true')
+  t(parse('[12, 20)', x => parseInt(x)).overlaps(parse('[10, 11]', x => parseInt(x))), false, '[12, 20).overlaps(\'[10, 11]\') is false')
+
+  t(parse('(5, 10)', x => parseInt(x)).adjacentTo(parse('(10, 20)', x => parseInt(x))), true, '(5, 10).adjacentTo(\'(10, 20]\') is true')
+  t(parse('(5, 10]', x => parseInt(x)).adjacentTo(parse('[10, 20)', x => parseInt(x))), false, '(5, 10].adjacentTo(\'[10, 20]\') is false')
+  t(parse('(5, 5)', x => parseInt(x)).adjacentTo(parse('[10, 20)', x => parseInt(x))), false, '(5, 5].adjacentTo(\'[10, 20]\') is false')
 })
