@@ -18,6 +18,13 @@ export class Range<T> {
 
   containsPoint (point: T): boolean;
   containsRange (range: Range<T>): boolean;
+  
+  strictlyRightOf (range: Range<T>): boolean;
+  strictlyLeftOf (range: Range<T>): boolean;
+
+  adjacentTo (range: Range<T>): boolean;
+
+  overlaps (range: Range<T>): boolean;
 
   toPostgres (prepareValue: (value: any) => string): string;
 }

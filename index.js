@@ -86,6 +86,56 @@ class Range {
     )
   }
 
+  /**
+   * @param {Range} range
+   */
+  strictlyRightOf (range) {
+    if (
+      range.isEmpty()
+      || this.isEmpty()
+      || range.hasMask(RANGE_UB_INF)
+      || this.hasMask(RANGE_LB_INF)
+    ) {
+      return false
+    } else if (range.hasMask(RANGE_UB_INC) && this.hasMask(RANGE_LB_INC)) {
+      return this.lower > range.upper 
+    }
+    return this.lower >= range.upper 
+  }
+
+  /**
+   * @param {Range} range
+   */
+  strictlyLeftOf (range) {
+    if (
+      range.isEmpty()
+      || this.isEmpty()
+      || range.hasMask(RANGE_LB_INF)
+      || this.hasMask(RANGE_UB_INF)) {
+      return false
+    } else if (range.hasMask(RANGE_LB_INC) && this.hasMask(RANGE_UB_INC)) {
+      return this.upper < range.lower 
+    }
+    return this.upper <= range.lower 
+  }
+
+  /**
+   * @param {Range} range
+   */
+  overlaps (range) {
+    return !(this.strictlyRightOf(range) || this.strictlyLeftOf(range))
+  }
+
+  /**
+   * @param {Range} range
+   */
+  adjacentTo (range) {
+    return (
+      (this.upper == range.lower && !(this.hasMask(RANGE_UB_INC) && range.hasMask(RANGE_LB_INC))) ||
+      (this.lower == range.upper && !(this.hasMask(RANGE_LB_INC) && range.hasMask(RANGE_UB_INC)))
+    )
+  }
+
   toPostgres (prepareValue) {
     return serialize(this, prepareValue)
   }

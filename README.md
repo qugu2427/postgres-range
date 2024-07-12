@@ -31,6 +31,14 @@ rng.containsPoint(4)
 // => true
 rng.containsRange(range.parse('[1,2]', x => parseInt(x)))
 // => true
+rng.strictlyLeftOf(range.parse('[6,7]', x => parseInt(x)))
+// => true
+rng.strictlyRightOf(range.parse('[-10,-1]', x => parseInt(x)))
+// => true
+rng.overlaps(range.parse('[4,7]', x => parseInt(x)))
+// => true
+rng.adjacentTo(range.parse('(5,6]', x => parseInt(x)))
+// => true
 
 range.parse('empty').isEmpty()
 // => true
