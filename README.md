@@ -31,6 +31,10 @@ rng.containsPoint(4)
 // => true
 rng.containsRange(range.parse('[1,2]', x => parseInt(x)))
 // => true
+rng.extendsLeftOf(range.parse('[1,10]', x => parseInt(x)))
+// => true
+rng.extendsRightOf(range.parse('[0,3]', x => parseInt(x)))
+// => true
 rng.strictlyLeftOf(range.parse('[6,7]', x => parseInt(x)))
 // => true
 rng.strictlyRightOf(range.parse('[-10,-1]', x => parseInt(x)))
@@ -42,6 +46,13 @@ rng.adjacentTo(range.parse('(5,6]', x => parseInt(x)))
 
 range.parse('empty').isEmpty()
 // => true
+
+range.union('[5,10]')
+// => [0,10]
+range.intersection('[3,10]')
+// => [3,5)
+range.difference('[3,10]')
+// => [0,3)
 
 range.serialize(new range.Range(0, 5))
 // => '(0,5)'
