@@ -93,11 +93,11 @@ class Range {
     if (
       range.isEmpty()
       || this.isEmpty()
-      || range.hasMask(RANGE_UB_INF)
-      || this.hasMask(RANGE_LB_INF)
+      || !range.hasUpperBound()
+      || !this.hasLowerBound()
     ) {
       return false
-    } else if (range.hasMask(RANGE_UB_INC) && this.hasMask(RANGE_LB_INC)) {
+    } else if (range.isUpperBoundClosed() && this.isLowerBoundClosed()) {
       return this.lower > range.upper 
     }
     return this.lower >= range.upper 
@@ -110,10 +110,10 @@ class Range {
     if (
       range.isEmpty()
       || this.isEmpty()
-      || range.hasMask(RANGE_LB_INF)
-      || this.hasMask(RANGE_UB_INF)) {
+      || !range.hasLowerBound()
+      || !this.hasUpperBound()) {
       return false
-    } else if (range.hasMask(RANGE_LB_INC) && this.hasMask(RANGE_UB_INC)) {
+    } else if (range.isLowerBoundClosed() && this.isUpperBoundClosed()) {
       return this.upper < range.lower 
     }
     return this.upper <= range.lower 
@@ -122,8 +122,28 @@ class Range {
   /**
    * @param {Range} range
    */
+  extendsRightOf (range) {
+    return !range.isEmpty()
+      && !this.isEmpty()
+      && range.hasUpperBound()
+      && (!this.hasUpperBound() || this.upper > range.upper || (this.upper == range.upper && this.isUpperBoundClosed()))
+  }
+
+  /**
+   * @param {Range} range
+   */
+  extendsLeftOf (range) {
+    return !range.isEmpty()
+      && !this.isEmpty()
+      && range.hasLowerBound()
+      && (!this.hasLowerBound() || this.lower < range.lower || (this.lower == range.lower && this.isLowerBoundClosed()))
+  }
+
+  /**
+   * @param {Range} range
+   */
   overlaps (range) {
-    return !(this.strictlyRightOf(range) || this.strictlyLeftOf(range))
+    return !(this.strictlyRightOf(range) || this.strictlyLeftOf(range) || this.isEmpty() || range.isEmpty())
   }
 
   /**
@@ -131,9 +151,163 @@ class Range {
    */
   adjacentTo (range) {
     return (
-      (this.upper == range.lower && !(this.hasMask(RANGE_UB_INC) && range.hasMask(RANGE_LB_INC))) ||
-      (this.lower == range.upper && !(this.hasMask(RANGE_LB_INC) && range.hasMask(RANGE_UB_INC)))
+      !(this.isEmpty() || range.isEmpty()) && (
+        (this.upper === range.lower && this.isUpperBoundClosed() != range.isLowerBoundClosed()) ||
+        (this.lower === range.upper && this.isLowerBoundClosed() != range.isUpperBoundClosed())
+      )
     )
+  }
+
+  /**
+   * @param {Range} range
+   * @returns {Range}
+   */
+  union (range) {
+    let lb = null;
+    let ub = null;
+    let mask = 0;
+
+    if (this.isEmpty() && range.isEmpty()) {
+      return new Range(null, null, RANGE_EMPTY);
+    } else if (range.isEmpty()) {
+      return new Range(this.lower, this.upper, this.mask);
+    } else if (this.isEmpty()) {
+      return new Range(range.lower, range.upper, range.mask);
+    }
+
+    if (!this.overlaps(range) && !range.adjacentTo(this)) {
+      throw new RangeError("Cannot union non-overlapping or non-adjacent ranges");
+    }
+
+    if (this.hasMask(RANGE_LB_INF) || range.hasMask(RANGE_LB_INF)) {
+      mask |= RANGE_LB_INF;
+    } else if (this.lower < range.lower) {
+      lb = this.lower;
+      mask |= RANGE_LB_INC & this.mask;
+    } else if (this.lower > range.lower) {
+      lb = range.lower;
+      mask |= RANGE_LB_INC & range.mask;
+    } else {
+      lb = this.lower;
+      mask |= RANGE_LB_INC & (this.mask | range.mask);
+    }
+
+    if (this.hasMask(RANGE_UB_INF) || range.hasMask(RANGE_UB_INF)) {
+      mask |= RANGE_UB_INF;
+    } else if (this.upper > range.upper) {
+      ub = this.upper;
+      mask |= RANGE_UB_INC & this.mask;
+    } else if (this.upper < range.upper) {
+      ub = range.upper;
+      mask |= RANGE_UB_INC & range.mask;
+    } else {
+      ub = this.upper;
+      mask |= RANGE_UB_INC & (range.mask | this.mask);
+    }
+
+    return new Range(lb, ub, mask);
+  }
+
+  /**
+   * @param {Range} range
+   * @returns {Range}
+   */
+  intersection (range) {
+    let lb = null;
+    let ub = null;
+    let mask = 0;
+
+    if (!this.overlaps(range)) {
+      return new Range(null, null, RANGE_EMPTY);
+    }
+
+    if (this.hasMask(RANGE_LB_INF) && range.hasMask(RANGE_LB_INF)) {
+      mask |= RANGE_LB_INF;
+    } else if (this.lower < range.lower) {
+      lb = range.lower;
+      mask |= RANGE_LB_INC & range.mask;
+    } else if (this.lower > range.lower) {
+      lb = this.lower;
+      mask |= RANGE_LB_INC & range.mask;
+    } else {
+      lb = this.lower;
+      mask |= RANGE_LB_INC & (range.mask & this.mask);
+    }
+
+    if (this.hasMask(RANGE_UB_INF) && range.hasMask(RANGE_UB_INF)) {
+      mask |= RANGE_UB_INF
+    } else if (this.upper > range.upper) {
+      ub = range.upper;
+      mask |= RANGE_UB_INC & range.mask;
+    } else if (this.upper < range.upper) {
+      ub = this.upper;
+      mask |= RANGE_UB_INC & range.mask;
+    } else {
+      ub = this.upper;
+      mask |= RANGE_UB_INC & range.mask;
+    }
+
+    return new Range(lb, ub, mask);
+  }
+
+  /**
+   * @param {Range} range
+   * @returns {Range}
+   */
+  difference (range) {
+    let lb = this.lower;
+    let ub = this.upper;
+    let mask = 0;
+
+    if (!this.overlaps(range) || this.isEmpty() || range.isEmpty()) {
+      return new Range(lb, ub, this.mask);
+    }
+
+    if (
+      range.hasLowerBound()
+      && this.lower <= range.lower
+      && this.upper <= range.upper
+    ) {
+      ub = range.lower;
+      mask |= range.hasMask(RANGE_LB_INC) ? 0 : RANGE_UB_INC;
+    } else if (
+      range.hasUpperBound()
+      && range.lower <= this.lower
+      && range.upper <= this.upper) {
+      lb = range.upper;
+      mask |= range.hasMask(RANGE_UB_INC) ? 0 : RANGE_LB_INC;
+    } else if (
+      !this.hasLowerBound()
+      && this.hasUpperBound()
+      && !range.hasUpperBound()
+      && range.hasLowerBound()
+      && this.upper >= range.lower
+    ) {
+      ub = range.lower
+      mask |= range.hasMask(RANGE_LB_INC) ? 0 : RANGE_UB_INC;
+      mask |= RANGE_LB_INF
+    } else if (
+      this.hasLowerBound()
+      && !this.hasUpperBound()
+      && range.hasUpperBound()
+      && !range.hasLowerBound()
+      && this.lower <= range.upper
+    ) {
+      lb = range.upper
+      mask |= range.hasMask(RANGE_UB_INC) ? 0 : RANGE_LB_INC;
+      mask |= RANGE_UB_INF
+    } else if (
+      !this.hasLowerBound()
+      && !this.hasUpperBound()
+      && !range.hasUpperBound()
+      && !range.hasLowerBound()
+    ) {
+      return new Range(null, null, RANGE_EMPTY);
+    } else {
+      throw new RangeError("Cannot difference to multiple disjoint ranges");
+    }
+
+    return new Range(lb, ub, mask);
   }
 
   toPostgres (prepareValue) {
