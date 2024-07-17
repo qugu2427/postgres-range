@@ -19,6 +19,15 @@ class Range {
   }
 
   /**
+   * @param {Range} range
+   */
+  equals (range) {
+    return this.lower === range.lower
+      && this.upper === range.upper
+      && this.mask === range.mask
+  }
+
+  /**
    * @param {number} flag
    */
   hasMask (flag) {

@@ -100,6 +100,9 @@ describe('Range: boolean methods', function () {
   t(parse('[1, 10)', x => parseInt(x)).containsRange(parse('[1, 3]', x => parseInt(x))), true, '[1, 10).containsRange(\'[1, 3]\') is true')
   t(parse('[1, 10)', x => parseInt(x)).containsRange(parse('[-1, 3]', x => parseInt(x))), false, '[1, 10).containsRange(\'[-1, 3]\') is false')
 
+  t(parse('[1, 10)', x => parseInt(x)).equals(parse('[1, 10)', x => parseInt(x))), true, '[1, 10).equals(\'[1, 10)\') is true')
+  t(parse('[1, 10]', x => parseInt(x)).equals(parse('[1, 10)', x => parseInt(x))), false, '[1, 10].equals(\'[1, 10)\') is false')
+
   t(parse('empty', x => parseInt(x)).strictlyLeftOf(parse('[9, 11)', x => parseInt(x))), false, 'empty.strictlyLeftOf(\'[9, 11)\') is false')
   t(parse('[5, 6)', x => parseInt(x)).strictlyLeftOf(parse('empty', x => parseInt(x))), false, '[5, 6).strictlyLeftOf(\'empty\') is false')
   t(parse('[5, 6)', x => parseInt(x)).strictlyLeftOf(parse('(, 11)', x => parseInt(x))), false, '[5,6).strictlyLeftOf(\'(, 11)\') is false')

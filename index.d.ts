@@ -16,6 +16,8 @@ export class Range<T> {
   hasLowerBound (): boolean;
   hasUpperBound (): boolean;
 
+  equals (range: Range<T>): Range<T>;
+
   containsPoint (point: T): boolean;
   containsRange (range: Range<T>): boolean;
   strictlyRightOf (range: Range<T>): boolean;
